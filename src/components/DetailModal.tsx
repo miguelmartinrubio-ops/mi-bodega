@@ -47,6 +47,7 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
     else await updateVino(item.id, form)
     if (onUpdate) onUpdate(form)
     setEditing(false)
+    onClose()
   }
 
   async function handleDelete() {
