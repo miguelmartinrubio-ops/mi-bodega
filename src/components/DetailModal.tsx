@@ -11,6 +11,14 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
     setForm({ ...item })
   }, [item])
 
+  useEffect(() => {
+    function handleKey(e) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [onClose])
+
   if (!item) return null
 
   const isChamp = type === 'champagne'
@@ -39,7 +47,7 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
         { k: 'anadas_probadas', l: 'Anadas probadas' },
         { k: 'anadas_recomendadas', l: 'Anadas recomendadas' },
         { k: 'tier', l: 'Rating', sel: ['', '1', '2', '3', '4', '5'] },
-        { k: 'comentarios', l: 'Comentarios', multi: true },
+        { k: 'comentarios', l: 'Comentarios', multi: true, full: true },
       ]
 
   async function handleSave() {
@@ -64,31 +72,79 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
       onClick={onClose}
     >
       <div
-        className="rounded-2xl p-8 max-w-[560px] w-full max-h-[85vh] overflow-y-auto relative"
-        style={{ background: 'linear-gradient(180deg, ' + c.bg + ', #0d0d14)', border: '1px solid ' + c.accent + '44' }}
+        className="rounded-2xl p-6 w-full max-h-[90vh] overflow-y-auto relative"
+        style={{
+          background: 'linear-gradient(180deg, ' + c.bg + ', #0d0d14)',
+          border: '1px solid ' + c.accent + '44',
+          maxWidth: '800px'
+        }}
         onClick={e => e.stopPropagation()}
       >
-        <button
-          className="absolute top-4 right-4 bg-transparent border-none text-[#666] text-2xl cursor-pointer"
-          onClick={onClose}
-        >
-          ×
-        </button>
-        <div className="mb-6">
-          <span className="text-4xl">{icon}</span>
-          <h2 className="text-[22px] font-bold mt-2 mb-1" style={{ color: c.text }}>{title}</h2>
-          <p className="text-[#999] text-sm italic">{form.bodega}</p>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{icon}</span>
+            <div>
+              <h2 className="text-[18px] font-bold leading-tight" style={{ color: c.text }}>{title}</h2>
+              <p className="text-[#999] text-xs italic">{form.bodega}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {editing ? (
+              <>
+                <button
+                  className="px-4 py-2 border-none rounded-lg font-semibold cursor-pointer text-[13px] text-white"
+                  style={{ background: c.accent }}
+                  onClick={handleSave}
+                >
+                  💾 Guardar
+                </button>
+                <button
+                  className="px-4 py-2 rounded-lg font-semibold cursor-pointer text-[13px] text-[#aaa]"
+                  style={{ background: '#ffffff0a' }}
+                  onClick={() => { setForm({ ...item }); setEditing(false) }}
+                >
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="px-4 py-2 rounded-lg font-semibold cursor-pointer text-[13px]"
+                  style={{ background: c.accent + '22', border: '1px solid ' + c.accent + '44', color: c.accent }}
+                  onClick={() => setEditing(true)}
+                >
+                  ✏️ Editar
+                </button>
+                <button
+                  className="px-3 py-2 rounded-lg font-semibold cursor-pointer text-[13px] text-[#ff4d4f]"
+                  style={{ background: '#ff4d4f11', border: '1px solid #ff4d4f33' }}
+                  onClick={handleDelete}
+                >
+                  🗑️
+                </button>
+              </>
+            )}
+            <button
+              className="px-3 py-2 bg-transparent border-none text-[#666] text-xl cursor-pointer"
+              onClick={onClose}
+            >
+              ×
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col gap-4">
+
+        {/* Fields grid */}
+        <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
           {fields.map(f => (
-            <div key={f.k}>
-              <label className="text-[11px] uppercase tracking-wider block mb-1" style={{ color: c.accent }}>
+            <div key={f.k} style={{ gridColumn: f.full ? '1 / -1' : 'auto' }}>
+              <label className="text-[10px] uppercase tracking-wider block mb-1" style={{ color: c.accent }}>
                 {f.l}
               </label>
               {editing ? (
                 f.sel ? (
                   <select
-                    className="w-full rounded-lg p-2.5 text-sm outline-none text-[#e8e0d5]"
+                    className="w-full rounded-lg p-2 text-sm outline-none text-[#e8e0d5]"
                     style={{ background: '#ffffff0a', border: '1px solid ' + c.accent + '33' }}
                     value={form[f.k] || ''}
                     onChange={e => setForm({ ...form, [f.k]: e.target.value })}
@@ -101,15 +157,15 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
                   </select>
                 ) : f.multi ? (
                   <textarea
-                    className="w-full rounded-lg p-2.5 text-sm outline-none text-[#e8e0d5] resize-y"
+                    className="w-full rounded-lg p-2 text-sm outline-none text-[#e8e0d5] resize-y"
                     style={{ background: '#ffffff0a', border: '1px solid ' + c.accent + '33' }}
-                    rows={3}
+                    rows={2}
                     value={form[f.k] || ''}
                     onChange={e => setForm({ ...form, [f.k]: e.target.value })}
                   />
                 ) : (
                   <input
-                    className="w-full rounded-lg p-2.5 text-sm outline-none text-[#e8e0d5]"
+                    className="w-full rounded-lg p-2 text-sm outline-none text-[#e8e0d5]"
                     style={{ background: '#ffffff0a', border: '1px solid ' + c.accent + '33' }}
                     value={form[f.k] || ''}
                     onChange={e => setForm({ ...form, [f.k]: e.target.value })}
@@ -122,43 +178,6 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
               )}
             </div>
           ))}
-        </div>
-        <div className="flex gap-2.5 mt-7 pt-5" style={{ borderTop: '1px solid ' + c.accent + '22' }}>
-          {editing ? (
-            <>
-              <button
-                className="flex-1 py-3 border-none rounded-lg font-semibold cursor-pointer text-[13px] text-white"
-                style={{ background: c.accent }}
-                onClick={handleSave}
-              >
-                Guardar
-              </button>
-              <button
-                className="flex-1 py-3 rounded-lg font-semibold cursor-pointer text-[13px] text-[#aaa]"
-                style={{ background: '#ffffff0a' }}
-                onClick={() => { setForm({ ...item }); setEditing(false) }}
-              >
-                Cancelar
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                className="flex-1 py-3 rounded-lg font-semibold cursor-pointer text-[13px]"
-                style={{ background: c.accent + '22', border: '1px solid ' + c.accent + '44', color: c.accent }}
-                onClick={() => setEditing(true)}
-              >
-                ✏️ Editar
-              </button>
-              <button
-                className="py-3 px-5 rounded-lg font-semibold cursor-pointer text-[13px] text-[#ff4d4f]"
-                style={{ background: '#ff4d4f11', border: '1px solid #ff4d4f33' }}
-                onClick={handleDelete}
-              >
-                🗑️
-              </button>
-            </>
-          )}
         </div>
       </div>
     </div>
