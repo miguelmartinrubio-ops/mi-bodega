@@ -1,11 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { WINE_ICONS, TIPO_COLORS, PRICE_RANGES } from '../data/wines'
 import { useWineData } from '../context/WineContext'
 
-export default function DetailModal({ item, type, onClose }) {
+export default function DetailModal({ item, type, onClose, onUpdate }) {
   const { updateVino, updateChampagne, deleteVino, deleteChampagne } = useWineData()
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ ...item })
+
+  useEffect(() => {
+    setForm({ ...item })
+  }, [item])
 
   if (!item) return null
 
@@ -27,7 +31,7 @@ export default function DetailModal({ item, type, onClose }) {
     : [
         { k: 'marca', l: 'Marca' },
         { k: 'bodega', l: 'Bodega/Productor' },
-        { k: 'tipo', l: 'Tipo', sel: ['Tinto', 'Blanco', 'Blanco dulce', 'Dulce', 'Generoso', 'Manzanilla'] },
+        { k: 'tipo', l: 'Tipo', sel: ['Tinto', 'Blanco', 'Blanco dulce', 'Dulce', 'Generoso', 'Manzanilla', 'Champagne'] },
         { k: 'grado', l: 'Grado (%)' },
         { k: 'variedad', l: 'Variedad' },
         { k: 'region', l: 'Origen/Region' },
@@ -41,6 +45,7 @@ export default function DetailModal({ item, type, onClose }) {
   async function handleSave() {
     if (isChamp) await updateChampagne(item.id, form)
     else await updateVino(item.id, form)
+    if (onUpdate) onUpdate(form)
     setEditing(false)
   }
 
@@ -71,7 +76,7 @@ export default function DetailModal({ item, type, onClose }) {
         <div className="mb-6">
           <span className="text-4xl">{icon}</span>
           <h2 className="text-[22px] font-bold mt-2 mb-1" style={{ color: c.text }}>{title}</h2>
-          <p className="text-[#999] text-sm italic">{item.bodega}</p>
+          <p className="text-[#999] text-sm italic">{form.bodega}</p>
         </div>
         <div className="flex flex-col gap-4">
           {fields.map(f => (
@@ -111,7 +116,7 @@ export default function DetailModal({ item, type, onClose }) {
                 )
               ) : (
                 <p className="text-sm leading-relaxed" style={{ color: c.text }}>
-                  {f.k === 'tier' && item[f.k] ? item[f.k] + '/5 ' + '★'.repeat(Number(item[f.k])) : (item[f.k] || '—')}
+                  {f.k === 'tier' && form[f.k] ? form[f.k] + '/5 ' + '★'.repeat(Number(form[f.k])) : (form[f.k] || '—')}
                 </p>
               )}
             </div>
