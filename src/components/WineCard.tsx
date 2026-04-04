@@ -1,4 +1,42 @@
-const c = TIPO_COLORS[wine.tipo] || TIPO_COLORS['Tinto']
+import { useState } from 'react'
+import { WINE_ICONS, TIPO_COLORS } from '../data/wines'
+
+export default function WineCard({ wine, onClick, isChampagne = false }) {
+  const [hovered, setHovered] = useState(false)
+
+  if (isChampagne) {
+    const col = TIPO_COLORS['Champagne']
+    return (
+      <div
+        className="rounded-xl p-5 cursor-pointer transition-all duration-300"
+        style={{
+          background: `linear-gradient(135deg, ${col.bg}, #1a1a2e)`,
+          border: `1px solid ${hovered ? col.accent + '88' : col.accent + '44'}`,
+          boxShadow: hovered ? `0 8px 32px ${col.accent}22` : 'none',
+          transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onClick={onClick}
+      >
+        <div className="flex justify-between items-start mb-2">
+          <span className="text-2xl">🍾</span>
+          {wine.fecha && <span className="text-[11px] text-[#999]">{wine.fecha}</span>}
+        </div>
+        <h3 className="text-[15px] font-bold mb-1 leading-tight" style={{ color: col.text }}>
+          {wine.vino}
+        </h3>
+        <p className="text-xs text-[#999] italic mb-2">{wine.bodega}</p>
+        {wine.lugar && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full inline-block" style={{ background: col.accent + '22', color: col.accent }}>
+            📍 {wine.lugar}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  const c = TIPO_COLORS[wine.tipo] || TIPO_COLORS['Tinto']
   const icon = WINE_ICONS[wine.tipo] || '🍷'
 
   return (
@@ -24,7 +62,6 @@ const c = TIPO_COLORS[wine.tipo] || TIPO_COLORS['Tinto']
         {wine.marca}
       </h3>
       <p className="text-xs text-[#999] italic mb-3">{wine.bodega}</p>
-
       <div className="flex flex-wrap gap-1 mb-2">
         <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: c.accent + '22', color: c.accent }}>
           {wine.tipo}
@@ -36,7 +73,6 @@ const c = TIPO_COLORS[wine.tipo] || TIPO_COLORS['Tinto']
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ffffff11] text-[#aaa]">{wine.grado}%</span>
         )}
       </div>
-
       <div className="flex flex-col gap-1 mt-2">
         {wine.tier && (
           <span className="text-[11px] font-semibold" style={{ color: '#C4A942' }}>
@@ -51,3 +87,4 @@ const c = TIPO_COLORS[wine.tipo] || TIPO_COLORS['Tinto']
       </div>
     </div>
   )
+}
