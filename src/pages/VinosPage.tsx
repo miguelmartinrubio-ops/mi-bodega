@@ -54,8 +54,8 @@ export default function VinosPage() {
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
         {filtered.map(wine => (
           <WineCard
-            key={wine.id}
-            wine={wine}
+            key={wine.id + (wine.tier || '') + (wine.marca || '')}
+  wine={wine}
             onClick={() => setSelected(wine)}
           />
         ))}
