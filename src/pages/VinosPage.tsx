@@ -18,9 +18,7 @@ export default function VinosPage() {
       v.tipo?.toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => {
-      if (sortBy === 'rating') {
-        return (Number(b.tier) || 0) - (Number(a.tier) || 0)
-      }
+      if (sortBy === 'rating') return (Number(b.tier) || 0) - (Number(a.tier) || 0)
       if (sortBy === 'precio') {
         const order = ['<15€','15-25€','25-40€','40-50€','50-60€','60-80€','80-100€','100-125€','125-150€','150-200€','200-250€','250-300€']
         return order.indexOf(b.precio) - order.indexOf(a.precio)
@@ -55,14 +53,23 @@ export default function VinosPage() {
       </div>
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
         {filtered.map(wine => (
-          <WineCard key={wine.id} wine={wine} onClick={() => setSelected(wine)} />
+          <WineCard
+            key={wine.id}
+            wine={wine}
+            onClick={() => setSelected(wine)}
+          />
         ))}
       </div>
       {filtered.length === 0 && (
         <p className="text-center text-[#666] py-20">No se encontraron vinos</p>
       )}
       {selected && (
-        <DetailModal item={selected} type="vino" onClose={() => setSelected(null)} />
+        <DetailModal
+          item={data.vinos.find(v => v.id === selected.id) || selected}
+          type="vino"
+          onClose={() => setSelected(null)}
+          onUpdate={(form) => setSelected(prev => ({ ...prev, ...form }))}
+        />
       )}
     </>
   )
