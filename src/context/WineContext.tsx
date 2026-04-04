@@ -32,7 +32,9 @@ export function WineProvider({ children }) {
   }
 
   async function updateVino(id, form) {
-    await supabase.from('vinos').update(form).eq('id', id)
+    console.log('Updating vino:', id, form)
+    const { data, error } = await supabase.from('vinos').update(form).eq('id', id).select()
+    console.log('Result:', data, error)
     await fetchVinos()
   }
 
@@ -47,7 +49,9 @@ export function WineProvider({ children }) {
   }
 
   async function updateChampagne(id, form) {
-    await supabase.from('champagnes').update(form).eq('id', id)
+    console.log('Updating champagne:', id, form)
+    const { data, error } = await supabase.from('champagnes').update(form).eq('id', id).select()
+    console.log('Result:', data, error)
     await fetchChampagnes()
   }
 
