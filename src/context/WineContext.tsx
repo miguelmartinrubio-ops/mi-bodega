@@ -27,14 +27,14 @@ export function WineProvider({ children }) {
   }, [])
 
   async function addVino(form) {
-    await supabase.from('vinos').insert([form])
+    const { id: _, ...formWithoutId } = form
+    await supabase.from('vinos').insert([formWithoutId])
     await fetchVinos()
   }
 
   async function updateVino(id, form) {
-    console.log('Updating vino:', id, form)
-    const { data, error } = await supabase.from('vinos').update(form).eq('id', id).select()
-    console.log('Result:', data, error)
+    const { id: _, ...formWithoutId } = form
+    await supabase.from('vinos').update(formWithoutId).eq('id', id)
     await fetchVinos()
   }
 
@@ -44,14 +44,14 @@ export function WineProvider({ children }) {
   }
 
   async function addChampagne(form) {
-    await supabase.from('champagnes').insert([form])
+    const { id: _, ...formWithoutId } = form
+    await supabase.from('champagnes').insert([formWithoutId])
     await fetchChampagnes()
   }
 
   async function updateChampagne(id, form) {
-    console.log('Updating champagne:', id, form)
-    const { data, error } = await supabase.from('champagnes').update(form).eq('id', id).select()
-    console.log('Result:', data, error)
+    const { id: _, ...formWithoutId } = form
+    await supabase.from('champagnes').update(formWithoutId).eq('id', id)
     await fetchChampagnes()
   }
 
