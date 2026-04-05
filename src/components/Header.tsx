@@ -15,7 +15,7 @@ export default function Header() {
           backgroundClip: 'text',
         }}
       >
-        Mi Bodega Personal
+        Mi Bodega
       </h1>
       <p className="text-sm text-[#666] tracking-widest">
         DIARIO DE CATAS · {data.vinos.length + data.champagnes.length} VINOS
