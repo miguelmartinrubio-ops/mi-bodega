@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react'
 import { useWineData } from '../context/WineContext'
 import { PRICE_RANGES } from '../data/wines'
+import { formatVariedad } from '../utils/formatVariedad'
 
 export default function AddModal({ onClose }) {
   const { addVino } = useWineData()
@@ -24,7 +24,7 @@ export default function AddModal({ onClose }) {
 
   async function handleSubmit() {
     if (!form.marca || !form.bodega) { alert('Marca y bodega son obligatorios'); return }
-    await addVino(form)
+    await addVino({ ...form, variedad: formatVariedad(form.variedad) })
     onClose()
   }
 
@@ -33,7 +33,7 @@ export default function AddModal({ onClose }) {
     { k: 'bodega', l: 'Bodega/Productor *' },
     { k: 'tipo', l: 'Tipo', sel: ['Tinto', 'Blanco', 'Blanco dulce', 'Dulce', 'Generoso', 'Manzanilla', 'Champagne'] },
     { k: 'grado', l: 'Grado (%)', type: 'number' },
-    { k: 'variedad', l: 'Variedad' },
+    { k: 'variedad', l: 'Variedad', hint: 'Ej: 80% Tempranillo / 20% Garnacha' },
     { k: 'region', l: 'Origen/Region' },
     { k: 'precio', l: 'Rango precio', sel: ['', ...PRICE_RANGES] },
     { k: 'anadas_probadas', l: 'Anadas probadas' },
@@ -121,14 +121,20 @@ export default function AddModal({ onClose }) {
                   onChange={e => set(f.k, e.target.value)}
                 />
               ) : (
-                <input
-                  className="w-full rounded-lg p-2 text-sm outline-none text-[#e8e0d5]"
-                  style={{ background: '#ffffff0a', border: '1px solid ' + accent + '33' }}
-                  type={f.type || 'text'}
-                  step={f.type === 'number' ? '0.1' : undefined}
-                  value={form[f.k]}
-                  onChange={e => set(f.k, e.target.value)}
-                />
+                <>
+                  <input
+                    className="w-full rounded-lg p-2 text-sm outline-none text-[#e8e0d5]"
+                    style={{ background: '#ffffff0a', border: '1px solid ' + accent + '33' }}
+                    type={f.type || 'text'}
+                    step={f.type === 'number' ? '0.1' : undefined}
+                    placeholder={f.hint || ''}
+                    value={form[f.k]}
+                    onChange={e => set(f.k, e.target.value)}
+                  />
+                  {f.hint && (
+                    <p className="text-[9px] mt-0.5" style={{ color: accent + '99' }}>{f.hint}</p>
+                  )}
+                </>
               )}
             </div>
           ))}
