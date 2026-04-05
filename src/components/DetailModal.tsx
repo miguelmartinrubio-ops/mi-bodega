@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { WINE_ICONS, TIPO_COLORS, PRICE_RANGES } from '../data/wines'
 import { useWineData } from '../context/WineContext'
+import { formatVariedad } from '../utils/formatVariedad'
 
 export default function DetailModal({ item, type, onClose, onUpdate }) {
   const { updateVino, updateChampagne, deleteVino, deleteChampagne } = useWineData()
@@ -41,7 +42,7 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
         { k: 'bodega', l: 'Bodega/Productor' },
         { k: 'tipo', l: 'Tipo', sel: ['Tinto', 'Blanco', 'Blanco dulce', 'Dulce', 'Generoso', 'Manzanilla', 'Champagne'] },
         { k: 'grado', l: 'Grado (%)' },
-        { k: 'variedad', l: 'Variedad' },
+        { k: 'variedad', l: 'Variedad', hint: 'Ej: 80% Tempranillo / 20% Garnacha' },
         { k: 'region', l: 'Origen/Region' },
         { k: 'precio', l: 'Rango precio', sel: ['', ...PRICE_RANGES] },
         { k: 'anadas_probadas', l: 'Anadas probadas' },
@@ -51,9 +52,10 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
       ]
 
   async function handleSave() {
-    if (isChamp) await updateChampagne(item.id, form)
-    else await updateVino(item.id, form)
-    if (onUpdate) onUpdate(form)
+    const formFormatted = { ...form, variedad: formatVariedad(form.variedad) }
+    if (isChamp) await updateChampagne(item.id, formFormatted)
+    else await updateVino(item.id, formFormatted)
+    if (onUpdate) onUpdate(formFormatted)
     setEditing(false)
     onClose()
   }
@@ -164,12 +166,18 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
                     onChange={e => setForm({ ...form, [f.k]: e.target.value })}
                   />
                 ) : (
-                  <input
-                    className="w-full rounded-lg p-2 text-sm outline-none text-[#e8e0d5]"
-                    style={{ background: '#ffffff0a', border: '1px solid ' + c.accent + '33' }}
-                    value={form[f.k] || ''}
-                    onChange={e => setForm({ ...form, [f.k]: e.target.value })}
-                  />
+                  <>
+                    <input
+                      className="w-full rounded-lg p-2 text-sm outline-none text-[#e8e0d5]"
+                      style={{ background: '#ffffff0a', border: '1px solid ' + c.accent + '33' }}
+                      placeholder={f.hint || ''}
+                      value={form[f.k] || ''}
+                      onChange={e => setForm({ ...form, [f.k]: e.target.value })}
+                    />
+                    {f.hint && (
+                      <p className="text-[9px] mt-0.5" style={{ color: c.accent + '99' }}>{f.hint}</p>
+                    )}
+                  </>
                 )
               ) : (
                 <p className="text-sm leading-relaxed" style={{ color: c.text }}>
