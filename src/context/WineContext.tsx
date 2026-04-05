@@ -60,12 +60,18 @@ export function WineProvider({ children }) {
     await fetchChampagnes()
   }
 
+  async function updateEstado(id, estado) {
+    await supabase.from('vinos').update({ estado }).eq('id', id)
+    await fetchVinos()
+  }
+
   return (
     <WineContext.Provider value={{
       data: { vinos, champagnes },
       loading,
       addVino, updateVino, deleteVino,
-      addChampagne, updateChampagne, deleteChampagne
+      addChampagne, updateChampagne, deleteChampagne,
+      updateEstado
     }}>
       {children}
     </WineContext.Provider>
