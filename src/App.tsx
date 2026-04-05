@@ -10,10 +10,11 @@ import KanbanPage from './pages/KanbanPage'
 export default function App() {
   const [showAdd, setShowAdd] = useState(false)
   const location = useLocation()
+  const isKanban = location.pathname === '/kanban'
 
   return (
     <div style={{ minHeight: '100vh', background: '#0d0d14', color: '#e8e0d5' }}>
-      <div className="max-w-[1400px] mx-auto px-6 py-10">
+      <div className={isKanban ? 'px-6 py-10' : 'max-w-[1400px] mx-auto px-6 py-10'}>
         <Header />
         <StatsBar />
         <TabsBar onAdd={() => setShowAdd(true)} />
