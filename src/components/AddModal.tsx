@@ -4,7 +4,7 @@ import { PRICE_RANGES } from '../data/wines'
 import { formatVariedad } from '../utils/formatVariedad'
 
 export default function AddModal({ onClose }) {
-  const { addVino } = useWineData()
+  const { addVino, data } = useWineData()
 
   const [form, setForm] = useState({
     marca: '', bodega: '', tipo: 'Tinto', grado: '', variedad: '',
@@ -28,13 +28,17 @@ export default function AddModal({ onClose }) {
     onClose()
   }
 
+  // Listas únicas para autocompletado
+  const bodegas = [...new Set(data.vinos.map(v => v.bodega).filter(Boolean))].sort()
+  const regiones = [...new Set(data.vinos.map(v => v.region).filter(Boolean))].sort()
+
   const fields = [
     { k: 'marca', l: 'Marca *' },
-    { k: 'bodega', l: 'Bodega/Productor *' },
+    { k: 'bodega', l: 'Bodega/Productor *', list: 'bodegas-list' },
     { k: 'tipo', l: 'Tipo', sel: ['Tinto', 'Blanco', 'Blanco dulce', 'Dulce', 'Generoso', 'Manzanilla', 'Champagne'] },
     { k: 'grado', l: 'Grado (%)', type: 'number' },
     { k: 'variedad', l: 'Variedad', hint: 'Ej: 80% Tempranillo / 20% Garnacha' },
-    { k: 'region', l: 'Origen/Region' },
+    { k: 'region', l: 'Origen/Region', list: 'regiones-list' },
     { k: 'precio', l: 'Rango precio', sel: ['', ...PRICE_RANGES] },
     { k: 'anadas_probadas', l: 'Anadas probadas' },
     { k: 'anadas_recomendadas', l: 'Anadas recomendadas' },
@@ -50,6 +54,14 @@ export default function AddModal({ onClose }) {
       style={{ background: '#000000cc', backdropFilter: 'blur(8px)' }}
       onClick={onClose}
     >
+      {/* Datalists */}
+      <datalist id="bodegas-list">
+        {bodegas.map(b => <option key={b} value={b} />)}
+      </datalist>
+      <datalist id="regiones-list">
+        {regiones.map(r => <option key={r} value={r} />)}
+      </datalist>
+
       <div
         className="rounded-2xl p-6 w-full max-h-[90vh] overflow-y-auto relative"
         style={{
@@ -128,6 +140,7 @@ export default function AddModal({ onClose }) {
                     type={f.type || 'text'}
                     step={f.type === 'number' ? '0.1' : undefined}
                     placeholder={f.hint || ''}
+                    list={f.list || undefined}
                     value={form[f.k]}
                     onChange={e => set(f.k, e.target.value)}
                   />
