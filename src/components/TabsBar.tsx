@@ -1,3 +1,4 @@
+import { NavLink } from 'react-router-dom'
 import { useWineData } from '../context/WineContext'
 import { exportToExcel } from '../utils/exportExcel'
 
@@ -6,9 +7,27 @@ export default function TabsBar({ onAdd }) {
 
   return (
     <div className="flex items-center gap-0 mb-6" style={{ borderBottom: '1px solid #ffffff11' }}>
-      <span className="px-6 py-3 border-b-2 border-[#C4A942] font-semibold text-sm text-[#e8e0d5]">
+      <NavLink
+        to="/"
+        end
+        className={({ isActive }) =>
+          `px-6 py-3 bg-transparent border-b-2 font-semibold text-sm cursor-pointer transition-all ${
+            isActive ? 'border-[#C4A942] text-[#e8e0d5]' : 'border-transparent text-[#666]'
+          }`
+        }
+      >
         🍷 Vinos <span className="text-[11px] opacity-60">({data.vinos.length})</span>
-      </span>
+      </NavLink>
+      <NavLink
+        to="/kanban"
+        className={({ isActive }) =>
+          `px-6 py-3 bg-transparent border-b-2 font-semibold text-sm cursor-pointer transition-all ${
+            isActive ? 'border-[#C4A942] text-[#e8e0d5]' : 'border-transparent text-[#666]'
+          }`
+        }
+      >
+        📋 Kanban
+      </NavLink>
       <div className="flex-1" />
       <button
         onClick={() => exportToExcel(data)}
