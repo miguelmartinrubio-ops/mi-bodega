@@ -30,7 +30,6 @@ export default function TimelinePage() {
       .from("tomas")
       .select("*, vinos(marca, bodega, tipo)")
       .order("fecha", { ascending: false });
-
     if (!error && data) setTomas(data);
     setLoading(false);
   }
@@ -44,87 +43,105 @@ export default function TimelinePage() {
 
   const formatFecha = (fecha: string) =>
     new Date(fecha + "T00:00:00").toLocaleDateString("es-ES", {
-      day: "numeric", month: "long", year: "numeric",
+      day: "numeric", month: "short", year: "numeric",
     });
 
+  const TomaRow = ({ toma }: { toma: Toma }) => (
+    <div className="flex items-center gap-3 relative pl-6">
+      {/* Dot */}
+      <div
+        className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-[#8B2252]"
+        style={{ background: '#8B2252' }}
+      />
+      {/* Card */}
+      <div
+        className="flex items-center gap-4 flex-1 px-4 py-2 rounded-lg text-sm"
+        style={{ background: '#ffffff08', border: '1px solid #ffffff10' }}
+      >
+        <span className="text-[#C4A942] whitespace-nowrap text-xs font-medium min-w-[100px]">
+          {formatFecha(toma.fecha)}
+        </span>
+        <span className="text-[#e8e0d5] font-semibold truncate">
+          {toma.vinos?.marca || '—'}
+        </span>
+        <span className="text-[#666] truncate hidden sm:block">
+          {toma.vinos?.bodega}
+        </span>
+        {toma.lugar && (
+          <span className="text-[#888] whitespace-nowrap ml-auto text-xs">
+            📍 {toma.lugar}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-3xl mx-auto px-4 py-4">
       {/* Toggle */}
-      <div className="flex justify-center mb-8">
-        <div className="bg-gray-100 rounded-full p-1 flex gap-1">
+      <div className="flex justify-center mb-6">
+        <div className="flex gap-1 p-1 rounded-full" style={{ background: '#ffffff0a', border: '1px solid #ffffff15' }}>
           <button
             onClick={() => setViewMode("cronologico")}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              viewMode === "cronologico"
-                ? "bg-white shadow text-gray-900"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all"
+            style={viewMode === "cronologico"
+              ? { background: 'linear-gradient(135deg, #8B2252, #C4A942)', color: '#fff' }
+              : { color: '#666' }}
           >
             📅 Cronológico
           </button>
           <button
             onClick={() => setViewMode("por_vino")}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              viewMode === "por_vino"
-                ? "bg-white shadow text-gray-900"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all"
+            style={viewMode === "por_vino"
+              ? { background: 'linear-gradient(135deg, #8B2252, #C4A942)', color: '#fff' }
+              : { color: '#666' }}
           >
             🍷 Por vino
           </button>
         </div>
       </div>
 
-      {loading && (
-        <p className="text-center text-gray-400">Cargando...</p>
-      )}
+      {loading && <p className="text-center text-[#666] text-sm">Cargando...</p>}
 
       {!loading && tomas.length === 0 && (
-        <p className="text-center text-gray-400">
-          Aún no hay tomas registradas. Ábrelas desde la ficha de cada vino.
+        <p className="text-center text-[#555] text-sm italic">
+          Aún no hay catas registradas. Ábrelas desde la ficha de cada vino.
         </p>
       )}
 
       {/* Vista cronológica */}
       {!loading && viewMode === "cronologico" && (
         <div className="relative">
-          <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200" />
-          <div className="space-y-6">
-            {tomas.map((toma) => (
-              <div key={toma.id} className="flex gap-4 items-start pl-10 relative">
-                <div className="absolute left-3 top-2 w-3 h-3 rounded-full bg-wine-500 border-2 border-white shadow" style={{ backgroundColor: "#7c3048" }} />
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex-1">
-                  <p className="text-xs text-gray-400 mb-1">{formatFecha(toma.fecha)}</p>
-                  <p className="font-semibold text-gray-800">
-                    {toma.vinos?.marca || "Vino desconocido"}
-                  </p>
-                  <p className="text-sm text-gray-500">{toma.vinos?.bodega}</p>
-                  {toma.lugar && (
-                    <p className="text-sm text-gray-600 mt-2">📍 {toma.lugar}</p>
-                  )}
-                </div>
-              </div>
-            ))}
+          <div className="absolute left-[3px] top-0 bottom-0 w-px" style={{ background: '#8B225233' }} />
+          <div className="space-y-2">
+            {tomas.map(toma => <TomaRow key={toma.id} toma={toma} />)}
           </div>
         </div>
       )}
 
       {/* Vista por vino */}
       {!loading && viewMode === "por_vino" && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {Object.entries(grouped).map(([vinoId, { info, tomas: vinoTomas }]) => (
-            <div key={vinoId} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-              <div className="mb-3 pb-3 border-b border-gray-100">
-                <p className="font-semibold text-gray-800">{info?.marca || "Vino"}</p>
-                <p className="text-sm text-gray-500">{info?.bodega} · {info?.tipo}</p>
+            <div key={vinoId}>
+              {/* Cabecera del vino */}
+              <div className="flex items-baseline gap-2 mb-2 px-1">
+                <span className="text-sm font-bold" style={{ color: '#e8e0d5' }}>{info?.marca || 'Vino'}</span>
+                <span className="text-xs" style={{ color: '#666' }}>{info?.bodega}</span>
+                <span
+                  className="ml-auto text-[10px] px-2 py-0.5 rounded-full"
+                  style={{ background: '#ffffff0a', color: '#C4A942', border: '1px solid #C4A94233' }}
+                >
+                  {vinoTomas.length} {vinoTomas.length === 1 ? 'cata' : 'catas'}
+                </span>
               </div>
-              <div className="space-y-2">
-                {vinoTomas.map((toma) => (
-                  <div key={toma.id} className="flex items-start gap-3 text-sm">
-                    <span className="text-gray-400 min-w-[110px]">{formatFecha(toma.fecha)}</span>
-                    {toma.lugar && <span className="text-gray-600">📍 {toma.lugar}</span>}
-                  </div>
-                ))}
+              {/* Filas */}
+              <div className="relative">
+                <div className="absolute left-[3px] top-0 bottom-0 w-px" style={{ background: '#8B225233' }} />
+                <div className="space-y-1.5">
+                  {vinoTomas.map(toma => <TomaRow key={toma.id} toma={toma} />)}
+                </div>
               </div>
             </div>
           ))}
