@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useWineData } from '../context/WineContext'
 import { PRICE_RANGES } from '../data/wines'
 import { formatVariedad } from '../utils/formatVariedad'
+import { supabase } from '../lib/supabase'
 
 export default function AddModal({ onClose }) {
   const { addVino, data } = useWineData()
@@ -11,6 +12,10 @@ export default function AddModal({ onClose }) {
     region: '', precio: '', anadas_probadas: '', anadas_recomendadas: '',
     tier: '', comentarios: ''
   })
+
+  // Autocomplete variedad
+  const [sugerenciasVariedad, setSugerenciasVariedad] = useState<string[]>([])
+  const [showSugerenciasVariedad, setShowSugerenciasVariedad] = useState(false)
 
   useEffect(() => {
     function handleKey(e) {
@@ -28,6 +33,18 @@ export default function AddModal({ onClose }) {
     onClose()
   }
 
+  async function fetchVariedades(query: string) {
+    if (!query) { setSugerenciasVariedad([]); setShowSugerenciasVariedad(false); return }
+    const { data } = await supabase
+      .from('vinos')
+      .select('variedad')
+      .ilike('variedad', `%${query}%`)
+      .not('variedad', 'is', null)
+    const unicos = [...new Set((data || []).map((v: any) => v.variedad))] as string[]
+    setSugerenciasVariedad(unicos)
+    setShowSugerenciasVariedad(unicos.length > 0)
+  }
+
   // Listas únicas para autocompletado
   const bodegas = [...new Set(data.vinos.map(v => v.bodega).filter(Boolean))].sort()
   const regiones = [...new Set(data.vinos.map(v => v.region).filter(Boolean))].sort()
@@ -37,7 +54,7 @@ export default function AddModal({ onClose }) {
     { k: 'bodega', l: 'Bodega/Productor *', list: 'bodegas-list' },
     { k: 'tipo', l: 'Tipo', sel: ['Tinto', 'Blanco', 'Blanco dulce', 'Dulce', 'Generoso', 'Manzanilla', 'Champagne'] },
     { k: 'grado', l: 'Grado (%)', type: 'number' },
-    { k: 'variedad', l: 'Variedad', hint: 'Ej: 80% Tempranillo / 20% Garnacha' },
+    { k: 'variedad', l: 'Variedad', hint: 'Ej: 80% Tempranillo / 20% Garnacha', autocomplete: 'variedad' },
     { k: 'region', l: 'Origen/Region', list: 'regiones-list' },
     { k: 'precio', l: 'Rango precio', sel: ['', ...PRICE_RANGES] },
     { k: 'anadas_probadas', l: 'Anadas probadas' },
@@ -132,6 +149,44 @@ export default function AddModal({ onClose }) {
                   value={form[f.k]}
                   onChange={e => set(f.k, e.target.value)}
                 />
+              ) : f.autocomplete === 'variedad' ? (
+                <div className="relative">
+                  <input
+                    className="w-full rounded-lg p-2 text-sm outline-none text-[#e8e0d5]"
+                    style={{ background: '#ffffff0a', border: '1px solid ' + accent + '33' }}
+                    placeholder={f.hint || ''}
+                    value={form[f.k]}
+                    onChange={e => {
+                      set(f.k, e.target.value)
+                      fetchVariedades(e.target.value)
+                    }}
+                    onFocus={() => form[f.k] && fetchVariedades(form[f.k])}
+                    onBlur={() => setTimeout(() => setShowSugerenciasVariedad(false), 150)}
+                  />
+                  {f.hint && (
+                    <p className="text-[9px] mt-0.5" style={{ color: accent + '99' }}>{f.hint}</p>
+                  )}
+                  {showSugerenciasVariedad && (
+                    <div
+                      className="absolute z-20 w-full mt-1 rounded-lg overflow-hidden"
+                      style={{ background: '#1a1a2e', border: '1px solid ' + accent + '33' }}
+                    >
+                      {sugerenciasVariedad.map(v => (
+                        <button
+                          key={v}
+                          className="w-full text-left px-3 py-2 text-sm text-[#e8e0d5] transition-opacity hover:opacity-70"
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                          onClick={() => {
+                            set('variedad', v)
+                            setShowSugerenciasVariedad(false)
+                          }}
+                        >
+                          🍇 {v}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <>
                   <input
