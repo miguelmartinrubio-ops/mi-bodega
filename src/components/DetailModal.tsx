@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { WINE_ICONS, TIPO_COLORS, PRICE_RANGES } from '../data/wines'
 import { useWineData } from '../context/WineContext'
 import { formatVariedad } from '../utils/formatVariedad'
+import { supabase } from '../lib/supabase'
 
 interface Toma {
   id: string
@@ -23,6 +24,10 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
   const [nuevaLugar, setNuevaLugar] = useState('')
   const [savingToma, setSavingToma] = useState(false)
 
+  // Autocomplete lugares
+  const [sugerencias, setSugerencias] = useState<string[]>([])
+  const [showSugerencias, setShowSugerencias] = useState(false)
+
   useEffect(() => { setForm({ ...item }) }, [item])
 
   useEffect(() => {
@@ -32,9 +37,7 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
   }, [onClose])
 
   useEffect(() => {
-    if (tomasOpen && type === 'vino') {
-      loadTomas()
-    }
+    if (tomasOpen && type === 'vino') loadTomas()
   }, [tomasOpen])
 
   async function loadTomas() {
@@ -42,6 +45,18 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
     const data = await fetchTomas(item.id)
     setTomas(data)
     setTomasLoading(false)
+  }
+
+  async function fetchLugares(query: string) {
+    if (!query) { setSugerencias([]); setShowSugerencias(false); return }
+    const { data } = await supabase
+      .from('tomas')
+      .select('lugar')
+      .ilike('lugar', `%${query}%`)
+      .not('lugar', 'is', null)
+    const unicos = [...new Set((data || []).map((t: any) => t.lugar))] as string[]
+    setSugerencias(unicos)
+    setShowSugerencias(unicos.length > 0)
   }
 
   async function handleAddToma() {
@@ -256,14 +271,42 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
                     value={nuevaFecha}
                     onChange={e => setNuevaFecha(e.target.value)}
                   />
-                  <input
-                    type="text"
-                    placeholder="Lugar (restaurante, casa...)"
-                    className="rounded-lg p-2 text-sm outline-none text-[#e8e0d5] flex-[2] min-w-[160px]"
-                    style={{ background: '#ffffff0a', border: '1px solid ' + c.accent + '33' }}
-                    value={nuevaLugar}
-                    onChange={e => setNuevaLugar(e.target.value)}
-                  />
+                  {/* Input lugar con autocomplete */}
+                  <div className="relative flex-[2] min-w-[160px]">
+                    <input
+                      type="text"
+                      placeholder="Lugar (restaurante, casa...)"
+                      className="w-full rounded-lg p-2 text-sm outline-none text-[#e8e0d5]"
+                      style={{ background: '#ffffff0a', border: '1px solid ' + c.accent + '33' }}
+                      value={nuevaLugar}
+                      onChange={e => {
+                        setNuevaLugar(e.target.value)
+                        fetchLugares(e.target.value)
+                      }}
+                      onFocus={() => nuevaLugar && fetchLugares(nuevaLugar)}
+                      onBlur={() => setTimeout(() => setShowSugerencias(false), 150)}
+                    />
+                    {showSugerencias && (
+                      <div
+                        className="absolute z-20 w-full mt-1 rounded-lg overflow-hidden"
+                        style={{ background: '#1a1a2e', border: '1px solid ' + c.accent + '33' }}
+                      >
+                        {sugerencias.map(lugar => (
+                          <button
+                            key={lugar}
+                            className="w-full text-left px-3 py-2 text-sm text-[#e8e0d5] transition-opacity hover:opacity-70"
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                            onClick={() => {
+                              setNuevaLugar(lugar)
+                              setShowSugerencias(false)
+                            }}
+                          >
+                            📍 {lugar}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <button
                     className="px-4 py-2 rounded-lg font-semibold cursor-pointer text-[13px] text-white whitespace-nowrap"
                     style={{ background: c.accent, opacity: savingToma ? 0.6 : 1 }}
