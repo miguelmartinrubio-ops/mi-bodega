@@ -68,7 +68,56 @@ export default function KanbanPage() {
                 {vinos.map(vino => (
                   <div
                     key={vino.id}
-                    className="rounded-lg p-3 cursor-pointer transition-all"
+                    className="rounded-lg p-3 cursor-pointer transition-all hover:brightness-125"
                     style={{
                       background: '#ffffff0a',
-                      border: '1px soli
+                      border: '1px solid ' + col.color + '22',
+                      opacity: moving === vino.id ? 0.5 : 1,
+                      transition: 'opacity 0.2s'
+                    }}
+                    onClick={() => setSelected(vino)}
+                  >
+                    <p className="text-[12px] font-semibold text-[#e8e0d5] mb-0.5 leading-tight">{vino.marca}</p>
+                    <p className="text-[10px] text-[#888] italic mb-2">{vino.bodega}</p>
+                    {vino.tier && (
+                      <p className="text-[10px] mb-2" style={{ color: '#C4A942' }}>
+                        {'★'.repeat(Number(vino.tier))}{'☆'.repeat(5 - Number(vino.tier))}
+                      </p>
+                    )}
+
+                    <select
+                      className="w-full rounded p-1 text-[10px] outline-none cursor-pointer"
+                      style={{ background: '#1a1a2e', border: '1px solid ' + col.color + '33', color: col.color }}
+                      value={col.id}
+                      onChange={e => handleEstado(vino, e.target.value)}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      {COLUMNAS.map(c => (
+                        <option key={c.id} value={c.id} style={{ background: '#1a1a2e' }}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+
+                {vinos.length === 0 && (
+                  <p className="text-[10px] text-[#444] text-center py-4">Sin vinos</p>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {selected && (
+        <DetailModal
+          item={data.vinos.find(v => v.id === selected.id) || selected}
+          type="vino"
+          onClose={() => setSelected(null)}
+          onUpdate={(form) => setSelected(prev => ({ ...prev, ...form }))}
+        />
+      )}
+    </>
+  )
+}
