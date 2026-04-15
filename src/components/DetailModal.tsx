@@ -65,11 +65,12 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
 
   async function fetchVariedades(query: string) {
     if (!query) { setSugerenciasVariedad([]); setShowSugerenciasVariedad(false); return }
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('vinos')
       .select('variedad')
       .ilike('variedad', `%${query}%`)
       .not('variedad', 'is', null)
+    console.log('variedad query:', query, 'data:', data, 'error:', error)
     const unicos = [...new Set((data || []).map((v: any) => v.variedad))] as string[]
     setSugerenciasVariedad(unicos)
     setShowSugerenciasVariedad(unicos.length > 0)
@@ -316,7 +317,6 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
 
             {tomasOpen && (
               <div className="pb-2">
-                {/* Formulario nueva cata */}
                 <div className="flex gap-2 mb-4 flex-wrap">
                   <input
                     type="date"
@@ -325,7 +325,6 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
                     value={nuevaFecha}
                     onChange={e => setNuevaFecha(e.target.value)}
                   />
-                  {/* Input lugar con autocomplete */}
                   <div className="relative flex-[2] min-w-[160px]">
                     <input
                       type="text"
@@ -371,7 +370,6 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
                   </button>
                 </div>
 
-                {/* Lista de catas */}
                 {tomasLoading ? (
                   <p className="text-[#666] text-sm">Cargando...</p>
                 ) : tomas.length === 0 ? (
