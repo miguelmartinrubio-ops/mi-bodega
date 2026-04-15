@@ -6,6 +6,7 @@ import TabsBar from './components/TabsBar'
 import AddModal from './components/AddModal'
 import VinosPage from './pages/VinosPage'
 import KanbanPage from './pages/KanbanPage'
+import TimelinePage from './pages/TimelinePage'
 
 export default function App() {
   const [showAdd, setShowAdd] = useState(false)
@@ -21,6 +22,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<VinosPage />} />
           <Route path="/kanban" element={<KanbanPage />} />
+          <Route path="/timeline" element={<TimelinePage />} />
         </Routes>
         {showAdd && (
           <AddModal onClose={() => setShowAdd(false)} />
