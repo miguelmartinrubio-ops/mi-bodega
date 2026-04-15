@@ -125,7 +125,9 @@ export default function TimelinePage() {
       {/* Vista por vino */}
       {!loading && viewMode === "por_vino" && (
         <div className="space-y-6">
-          {Object.entries(grouped).map(([vinoId, { info, tomas: vinoTomas }]) => (
+         {Object.entries(grouped)
+  .sort(([, a], [, b]) => b.tomas.length - a.tomas.length)
+  .map(([vinoId, { info, tomas: vinoTomas }]) => (
             <div key={vinoId}>
               {/* Cabecera del vino */}
               <div
