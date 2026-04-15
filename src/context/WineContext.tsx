@@ -38,6 +38,10 @@ export function WineProvider({ children }) {
     await supabase.from('vinos').update({ estado }).eq('id', id)
     await fetchVinos()
   }
+  async function updateStock(id: number, stock: number) {
+    await supabase.from('vinos').update({ stock }).eq('id', id)
+    setVinos(prev => prev.map(v => v.id === id ? { ...v, stock } : v))
+  }
 
   // --- TOMAS ---
   async function fetchTomas(vinoId: number) {
@@ -60,7 +64,7 @@ export function WineProvider({ children }) {
       data: { vinos, champagnes: [] },
       loading,
       addVino, updateVino, deleteVino,
-      updateEstado,
+      updateEstado, updateStock,
       fetchTomas, addToma, deleteToma
     }}>
       {children}
