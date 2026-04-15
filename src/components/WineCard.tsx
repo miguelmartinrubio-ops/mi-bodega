@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { WINE_ICONS, TIPO_COLORS } from '../data/wines'
+import { useWineData } from '../context/WineContext'
 
 export default function WineCard({ wine, onClick, isChampagne = false }) {
   const [hovered, setHovered] = useState(false)
+  const { updateStock } = useWineData()
 
   if (isChampagne) {
     const col = TIPO_COLORS['Champagne']
@@ -38,6 +40,13 @@ export default function WineCard({ wine, onClick, isChampagne = false }) {
 
   const c = TIPO_COLORS[wine.tipo] || TIPO_COLORS['Tinto']
   const icon = WINE_ICONS[wine.tipo] || '🍷'
+  const stock = wine.stock || 0
+
+  function handleStock(e: React.MouseEvent, delta: number) {
+    e.stopPropagation()
+    const nuevo = Math.max(0, stock + delta)
+    updateStock(wine.id, nuevo)
+  }
 
   return (
     <div
@@ -73,17 +82,40 @@ export default function WineCard({ wine, onClick, isChampagne = false }) {
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ffffff11] text-[#aaa]">{wine.grado}%</span>
         )}
       </div>
-      <div className="flex flex-col gap-1 mt-2">
-        {wine.tier && (
-          <span className="text-[11px] font-semibold" style={{ color: '#C4A942' }}>
-            {'★'.repeat(Number(wine.tier))}{'☆'.repeat(5 - Number(wine.tier))} {wine.tier}/5
+      <div className="flex items-center justify-between mt-2">
+        <div className="flex flex-col gap-1">
+          {wine.tier && (
+            <span className="text-[11px] font-semibold" style={{ color: '#C4A942' }}>
+              {'★'.repeat(Number(wine.tier))}{'☆'.repeat(5 - Number(wine.tier))} {wine.tier}/5
+            </span>
+          )}
+          {wine.anadas_probadas && (
+            <span className="text-[10px] text-[#888]">🗓 {wine.anadas_probadas}</span>
+          )}
+        </div>
+        {/* Stock control */}
+        <div
+          className="flex items-center gap-1.5 rounded-lg px-2 py-1"
+          style={{ background: '#ffffff0a', border: '1px solid #ffffff15' }}
+        >
+          <button
+            className="w-5 h-5 rounded flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-70"
+            style={{ background: c.accent + '33', color: c.accent }}
+            onClick={(e) => handleStock(e, -1)}
+          >
+            −
+          </button>
+          <span className="text-xs font-semibold min-w-[16px] text-center" style={{ color: stock > 0 ? c.accent : '#555' }}>
+            {stock}
           </span>
-        )}
-        {wine.anadas_probadas && (
-          <span className="text-[10px] text-[#888]">
-            🗓 {wine.anadas_probadas}
-          </span>
-        )}
+          <button
+            className="w-5 h-5 rounded flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-70"
+            style={{ background: c.accent + '33', color: c.accent }}
+            onClick={(e) => handleStock(e, +1)}
+          >
+            +
+          </button>
+        </div>
       </div>
     </div>
   )
