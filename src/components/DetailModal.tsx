@@ -24,9 +24,13 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
   const [nuevaLugar, setNuevaLugar] = useState('')
   const [savingToma, setSavingToma] = useState(false)
 
-  // Autocomplete lugares
-  const [sugerencias, setSugerencias] = useState<string[]>([])
-  const [showSugerencias, setShowSugerencias] = useState(false)
+  // Autocomplete lugar
+  const [sugerenciasLugar, setSugerenciasLugar] = useState<string[]>([])
+  const [showSugerenciasLugar, setShowSugerenciasLugar] = useState(false)
+
+  // Autocomplete variedad
+  const [sugerenciasVariedad, setSugerenciasVariedad] = useState<string[]>([])
+  const [showSugerenciasVariedad, setShowSugerenciasVariedad] = useState(false)
 
   useEffect(() => { setForm({ ...item }) }, [item])
 
@@ -48,15 +52,27 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
   }
 
   async function fetchLugares(query: string) {
-    if (!query) { setSugerencias([]); setShowSugerencias(false); return }
+    if (!query) { setSugerenciasLugar([]); setShowSugerenciasLugar(false); return }
     const { data } = await supabase
       .from('tomas')
       .select('lugar')
       .ilike('lugar', `%${query}%`)
       .not('lugar', 'is', null)
     const unicos = [...new Set((data || []).map((t: any) => t.lugar))] as string[]
-    setSugerencias(unicos)
-    setShowSugerencias(unicos.length > 0)
+    setSugerenciasLugar(unicos)
+    setShowSugerenciasLugar(unicos.length > 0)
+  }
+
+  async function fetchVariedades(query: string) {
+    if (!query) { setSugerenciasVariedad([]); setShowSugerenciasVariedad(false); return }
+    const { data } = await supabase
+      .from('vinos')
+      .select('variedad')
+      .ilike('variedad', `%${query}%`)
+      .not('variedad', 'is', null)
+    const unicos = [...new Set((data || []).map((v: any) => v.variedad))] as string[]
+    setSugerenciasVariedad(unicos)
+    setShowSugerenciasVariedad(unicos.length > 0)
   }
 
   async function handleAddToma() {
@@ -96,7 +112,7 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
         { k: 'bodega', l: 'Bodega/Productor' },
         { k: 'tipo', l: 'Tipo', sel: ['Tinto', 'Blanco', 'Blanco dulce', 'Dulce', 'Generoso', 'Manzanilla', 'Champagne'] },
         { k: 'grado', l: 'Grado (%)' },
-        { k: 'variedad', l: 'Variedad', hint: 'Ej: 80% Tempranillo / 20% Garnacha' },
+        { k: 'variedad', l: 'Variedad', hint: 'Ej: 80% Tempranillo / 20% Garnacha', autocomplete: 'variedad' },
         { k: 'region', l: 'Origen/Region' },
         { k: 'precio', l: 'Rango precio', sel: ['', ...PRICE_RANGES] },
         { k: 'anadas_probadas', l: 'Anadas probadas' },
@@ -224,6 +240,44 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
                     value={form[f.k] || ''}
                     onChange={e => setForm({ ...form, [f.k]: e.target.value })}
                   />
+                ) : f.autocomplete === 'variedad' ? (
+                  <div className="relative">
+                    <input
+                      className="w-full rounded-lg p-2 text-sm outline-none text-[#e8e0d5]"
+                      style={{ background: '#ffffff0a', border: '1px solid ' + c.accent + '33' }}
+                      placeholder={f.hint || ''}
+                      value={form[f.k] || ''}
+                      onChange={e => {
+                        setForm({ ...form, [f.k]: e.target.value })
+                        fetchVariedades(e.target.value)
+                      }}
+                      onFocus={() => form[f.k] && fetchVariedades(form[f.k])}
+                      onBlur={() => setTimeout(() => setShowSugerenciasVariedad(false), 150)}
+                    />
+                    {f.hint && (
+                      <p className="text-[9px] mt-0.5" style={{ color: c.accent + '99' }}>{f.hint}</p>
+                    )}
+                    {showSugerenciasVariedad && (
+                      <div
+                        className="absolute z-20 w-full mt-1 rounded-lg overflow-hidden"
+                        style={{ background: '#1a1a2e', border: '1px solid ' + c.accent + '33' }}
+                      >
+                        {sugerenciasVariedad.map(v => (
+                          <button
+                            key={v}
+                            className="w-full text-left px-3 py-2 text-sm text-[#e8e0d5] transition-opacity hover:opacity-70"
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                            onClick={() => {
+                              setForm({ ...form, variedad: v })
+                              setShowSugerenciasVariedad(false)
+                            }}
+                          >
+                            🍇 {v}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <>
                     <input
@@ -284,21 +338,21 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
                         fetchLugares(e.target.value)
                       }}
                       onFocus={() => nuevaLugar && fetchLugares(nuevaLugar)}
-                      onBlur={() => setTimeout(() => setShowSugerencias(false), 150)}
+                      onBlur={() => setTimeout(() => setShowSugerenciasLugar(false), 150)}
                     />
-                    {showSugerencias && (
+                    {showSugerenciasLugar && (
                       <div
                         className="absolute z-20 w-full mt-1 rounded-lg overflow-hidden"
                         style={{ background: '#1a1a2e', border: '1px solid ' + c.accent + '33' }}
                       >
-                        {sugerencias.map(lugar => (
+                        {sugerenciasLugar.map(lugar => (
                           <button
                             key={lugar}
                             className="w-full text-left px-3 py-2 text-sm text-[#e8e0d5] transition-opacity hover:opacity-70"
                             style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
                             onClick={() => {
                               setNuevaLugar(lugar)
-                              setShowSugerencias(false)
+                              setShowSugerenciasLugar(false)
                             }}
                           >
                             📍 {lugar}
