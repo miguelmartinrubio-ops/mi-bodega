@@ -3,22 +3,61 @@ import { WINE_ICONS, TIPO_COLORS, PRICE_RANGES } from '../data/wines'
 import { useWineData } from '../context/WineContext'
 import { formatVariedad } from '../utils/formatVariedad'
 
+interface Toma {
+  id: string
+  vino_id: number
+  fecha: string
+  lugar: string | null
+}
+
 export default function DetailModal({ item, type, onClose, onUpdate }) {
-  const { updateVino, updateChampagne, deleteVino, deleteChampagne } = useWineData()
+  const { updateVino, updateChampagne, deleteVino, deleteChampagne, fetchTomas, addToma, deleteToma } = useWineData()
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ ...item })
 
-  useEffect(() => {
-    setForm({ ...item })
-  }, [item])
+  // Tomas
+  const [tomasOpen, setTomasOpen] = useState(false)
+  const [tomas, setTomas] = useState<Toma[]>([])
+  const [tomasLoading, setTomasLoading] = useState(false)
+  const [nuevaFecha, setNuevaFecha] = useState(new Date().toISOString().split('T')[0])
+  const [nuevaLugar, setNuevaLugar] = useState('')
+  const [savingToma, setSavingToma] = useState(false)
+
+  useEffect(() => { setForm({ ...item }) }, [item])
 
   useEffect(() => {
-    function handleKey(e) {
-      if (e.key === 'Escape') onClose()
-    }
+    function handleKey(e) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [onClose])
+
+  useEffect(() => {
+    if (tomasOpen && type === 'vino') {
+      loadTomas()
+    }
+  }, [tomasOpen])
+
+  async function loadTomas() {
+    setTomasLoading(true)
+    const data = await fetchTomas(item.id)
+    setTomas(data)
+    setTomasLoading(false)
+  }
+
+  async function handleAddToma() {
+    if (!nuevaFecha) return
+    setSavingToma(true)
+    await addToma(item.id, nuevaFecha, nuevaLugar)
+    await loadTomas()
+    setNuevaLugar('')
+    setNuevaFecha(new Date().toISOString().split('T')[0])
+    setSavingToma(false)
+  }
+
+  async function handleDeleteToma(tomaId: string) {
+    await deleteToma(tomaId)
+    await loadTomas()
+  }
 
   if (!item) return null
 
@@ -66,6 +105,11 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
     else await deleteVino(item.id)
     onClose()
   }
+
+  const formatFecha = (fecha: string) =>
+    new Date(fecha + 'T00:00:00').toLocaleDateString('es-ES', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    })
 
   return (
     <div
@@ -187,6 +231,83 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
             </div>
           ))}
         </div>
+
+        {/* Historial de catas — solo para vinos */}
+        {type === 'vino' && (
+          <div className="mt-6" style={{ borderTop: '1px solid ' + c.accent + '22' }}>
+            <button
+              className="w-full flex items-center justify-between py-3 bg-transparent border-none cursor-pointer text-left"
+              onClick={() => setTomasOpen(!tomasOpen)}
+            >
+              <span className="text-[12px] uppercase tracking-wider font-semibold" style={{ color: c.accent }}>
+                🍷 Historial de catas {tomas.length > 0 && !tomasLoading ? `(${tomas.length})` : ''}
+              </span>
+              <span className="text-[#666] text-sm">{tomasOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {tomasOpen && (
+              <div className="pb-2">
+                {/* Formulario nueva cata */}
+                <div className="flex gap-2 mb-4 flex-wrap">
+                  <input
+                    type="date"
+                    className="rounded-lg p-2 text-sm outline-none text-[#e8e0d5] flex-1 min-w-[130px]"
+                    style={{ background: '#ffffff0a', border: '1px solid ' + c.accent + '33' }}
+                    value={nuevaFecha}
+                    onChange={e => setNuevaFecha(e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Lugar (restaurante, casa...)"
+                    className="rounded-lg p-2 text-sm outline-none text-[#e8e0d5] flex-[2] min-w-[160px]"
+                    style={{ background: '#ffffff0a', border: '1px solid ' + c.accent + '33' }}
+                    value={nuevaLugar}
+                    onChange={e => setNuevaLugar(e.target.value)}
+                  />
+                  <button
+                    className="px-4 py-2 rounded-lg font-semibold cursor-pointer text-[13px] text-white whitespace-nowrap"
+                    style={{ background: c.accent, opacity: savingToma ? 0.6 : 1 }}
+                    onClick={handleAddToma}
+                    disabled={savingToma}
+                  >
+                    {savingToma ? '...' : '+ Añadir'}
+                  </button>
+                </div>
+
+                {/* Lista de catas */}
+                {tomasLoading ? (
+                  <p className="text-[#666] text-sm">Cargando...</p>
+                ) : tomas.length === 0 ? (
+                  <p className="text-[#555] text-sm italic">Aún no hay catas registradas.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {tomas.map(toma => (
+                      <div
+                        key={toma.id}
+                        className="flex items-center justify-between rounded-lg px-3 py-2"
+                        style={{ background: '#ffffff07', border: '1px solid ' + c.accent + '18' }}
+                      >
+                        <div className="flex items-center gap-3 text-sm">
+                          <span style={{ color: c.accent }}>🍷</span>
+                          <span className="text-[#ccc]">{formatFecha(toma.fecha)}</span>
+                          {toma.lugar && (
+                            <span className="text-[#888]">· 📍 {toma.lugar}</span>
+                          )}
+                        </div>
+                        <button
+                          className="text-[#ff4d4f55] hover:text-[#ff4d4f] text-xs bg-transparent border-none cursor-pointer transition-colors"
+                          onClick={() => handleDeleteToma(toma.id)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
