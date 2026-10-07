@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { turso, query, pickVinoFields } from '../lib/turso'
 
 const WineContext = createContext(null)
 
@@ -8,8 +8,8 @@ export function WineProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   async function fetchVinos() {
-    const { data } = await supabase.from('vinos').select('*').order('bodega')
-    setVinos(data || [])
+    const data = await query('SELECT * FROM vinos ORDER BY bodega')
+    setVinos(data)
   }
 
   useEffect(() => {
@@ -21,42 +21,50 @@ export function WineProvider({ children }) {
   }, [])
 
   async function addVino(form) {
-    const { id: _, ...formWithoutId } = form
-    await supabase.from('vinos').insert([formWithoutId])
+    const fields = pickVinoFields(form)
+    await turso.execute({
+      sql: `INSERT INTO vinos (${fields.map(([c]) => c).join(', ')}) VALUES (${fields.map(() => '?').join(', ')})`,
+      args: fields.map(([, v]) => v),
+    })
     await fetchVinos()
   }
   async function updateVino(id, form) {
-    const { id: _, ...formWithoutId } = form
-    await supabase.from('vinos').update(formWithoutId).eq('id', id)
+    const fields = pickVinoFields(form)
+    if (fields.length === 0) return
+    await turso.execute({
+      sql: `UPDATE vinos SET ${fields.map(([c]) => `${c} = ?`).join(', ')} WHERE id = ?`,
+      args: [...fields.map(([, v]) => v), id],
+    })
     await fetchVinos()
   }
   async function deleteVino(id) {
-    await supabase.from('vinos').delete().eq('id', id)
+    await turso.batch([
+      { sql: 'DELETE FROM tomas WHERE vino_id = ?', args: [id] },
+      { sql: 'DELETE FROM vinos WHERE id = ?', args: [id] },
+    ], 'write')
     await fetchVinos()
   }
   async function updateEstado(id, estado) {
-    await supabase.from('vinos').update({ estado }).eq('id', id)
+    await turso.execute({ sql: 'UPDATE vinos SET estado = ? WHERE id = ?', args: [estado, id] })
     await fetchVinos()
   }
   async function updateStock(id: number, stock: number) {
-    await supabase.from('vinos').update({ stock }).eq('id', id)
+    await turso.execute({ sql: 'UPDATE vinos SET stock = ? WHERE id = ?', args: [stock, id] })
     setVinos(prev => prev.map(v => v.id === id ? { ...v, stock } : v))
   }
 
   // --- TOMAS ---
   async function fetchTomas(vinoId: number) {
-    const { data } = await supabase
-      .from('tomas')
-      .select('*')
-      .eq('vino_id', vinoId)
-      .order('fecha', { ascending: false })
-    return data || []
+    return query('SELECT * FROM tomas WHERE vino_id = ? ORDER BY fecha DESC', [vinoId])
   }
   async function addToma(vinoId: number, fecha: string, lugar: string) {
-    await supabase.from('tomas').insert([{ vino_id: vinoId, fecha, lugar }])
+    await turso.execute({
+      sql: 'INSERT INTO tomas (id, vino_id, fecha, lugar) VALUES (?, ?, ?, ?)',
+      args: [crypto.randomUUID(), vinoId, fecha, lugar || null],
+    })
   }
   async function deleteToma(tomaId: string) {
-    await supabase.from('tomas').delete().eq('id', tomaId)
+    await turso.execute({ sql: 'DELETE FROM tomas WHERE id = ?', args: [tomaId] })
   }
 
   return (

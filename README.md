@@ -1,73 +1,46 @@
-# React + TypeScript + Vite
+# Mi Bodega
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+App React + Vite para gestionar tu bodega personal. Los datos se guardan en [Turso](https://turso.tech) (libSQL / SQLite).
 
-Currently, two official plugins are available:
+## Configuración de Turso
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+# 1. Instalar la CLI y crear la base de datos
+curl -sSfL https://get.tur.so/install.sh | bash
+turso auth login
+turso db create mi-bodega
 
-## React Compiler
+# 2. Crear las tablas
+turso db shell mi-bodega < db/schema.sql
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# 3. Obtener URL y token
+turso db show mi-bodega --url
+turso db tokens create mi-bodega
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Copia `.env.example` a `.env.local` y rellena `VITE_TURSO_DATABASE_URL` y `VITE_TURSO_AUTH_TOKEN`.
+En el hosting (Vercel, Netlify…) define las mismas variables de entorno.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+> ⚠️ El token va incluido en el bundle del navegador, así que cualquiera que abra la app puede
+> leer y escribir en la base de datos. Es aceptable para una app personal; si la publicas,
+> mueve las consultas a una función serverless y deja el token solo en el servidor.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Migrar los datos desde Supabase
+
+```bash
+SUPABASE_URL=https://yoodyxpvpipyotfsxfsh.supabase.co \
+SUPABASE_KEY=<tu service_role key, o la publishable si RLS permite leer> \
+TURSO_DATABASE_URL=libsql://mi-bodega-<usuario>.turso.io \
+TURSO_AUTH_TOKEN=<token> \
+npm run db:migrate
+```
+
+El script crea las tablas si no existen y copia `vinos` y `tomas` conservando los ids.
+Se puede ejecutar varias veces sin duplicar filas.
+
+## Desarrollo
+
+```bash
+npm install
+npm run dev
 ```
