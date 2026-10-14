@@ -30,7 +30,7 @@ En el hosting (Vercel, Netlify…) define las mismas variables de entorno.
 ```bash
 SUPABASE_URL=https://yoodyxpvpipyotfsxfsh.supabase.co \
 SUPABASE_KEY=<tu service_role key, o la publishable si RLS permite leer> \
-TURSO_DATABASE_URL=libsql://mi-bodega-<usuario>.turso.io \
+TURSO_DATABASE_URL=libsql://mi-bodega-mmartinrub.aws-eu-west-1.turso.io \
 TURSO_AUTH_TOKEN=<token> \
 npm run db:migrate
 ```
