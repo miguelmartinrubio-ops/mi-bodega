@@ -20,11 +20,11 @@ CREATE TABLE IF NOT EXISTS vinos (
 );
 
 CREATE TABLE IF NOT EXISTS tomas (
-  id         TEXT PRIMARY KEY NOT NULL DEFAULT (lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))),
+  id         TEXT PRIMARY KEY NOT NULL,  -- UUID generado por la app (crypto.randomUUID)
   vino_id    INTEGER NOT NULL REFERENCES vinos(id) ON DELETE CASCADE,
-  fecha      TEXT NOT NULL,
+  fecha      TEXT NOT NULL,              -- YYYY-MM-DD
   lugar      TEXT,
-  created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_tomas_vino_id ON tomas(vino_id);
