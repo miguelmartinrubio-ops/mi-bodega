@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useWineData } from '../context/WineContext'
 import { PRICE_RANGES } from '../data/wines'
 import { formatVariedad } from '../utils/formatVariedad'
-import { supabase } from '../lib/supabase'
+import { query } from '../lib/turso'
 
 export default function AddModal({ onClose }) {
   const { addVino, data } = useWineData()
@@ -33,13 +33,12 @@ export default function AddModal({ onClose }) {
     onClose()
   }
 
-  async function fetchVariedades(query: string) {
-    if (!query) { setSugerenciasVariedad([]); setShowSugerenciasVariedad(false); return }
-    const { data } = await supabase
-      .from('vinos')
-      .select('variedad')
-      .ilike('variedad', `%${query}%`)
-      .not('variedad', 'is', null)
+  async function fetchVariedades(q: string) {
+    if (!q) { setSugerenciasVariedad([]); setShowSugerenciasVariedad(false); return }
+    const data = await query(
+      'SELECT DISTINCT variedad FROM vinos WHERE variedad IS NOT NULL AND variedad LIKE ?',
+      [`%${q}%`]
+    )
     const unicos = [...new Set((data || []).map((v: any) => v.variedad))] as string[]
     setSugerenciasVariedad(unicos)
     setShowSugerenciasVariedad(unicos.length > 0)

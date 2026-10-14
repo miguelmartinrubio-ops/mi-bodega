@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { WINE_ICONS, TIPO_COLORS, PRICE_RANGES } from '../data/wines'
 import { useWineData } from '../context/WineContext'
 import { formatVariedad } from '../utils/formatVariedad'
-import { supabase } from '../lib/supabase'
+import { query } from '../lib/turso'
 
 interface Toma {
   id: string
@@ -51,26 +51,23 @@ export default function DetailModal({ item, type, onClose, onUpdate }) {
     setTomasLoading(false)
   }
 
-  async function fetchLugares(query: string) {
-    if (!query) { setSugerenciasLugar([]); setShowSugerenciasLugar(false); return }
-    const { data } = await supabase
-      .from('tomas')
-      .select('lugar')
-      .ilike('lugar', `%${query}%`)
-      .not('lugar', 'is', null)
+  async function fetchLugares(q: string) {
+    if (!q) { setSugerenciasLugar([]); setShowSugerenciasLugar(false); return }
+    const data = await query(
+      'SELECT DISTINCT lugar FROM tomas WHERE lugar IS NOT NULL AND lugar LIKE ?',
+      [`%${q}%`]
+    )
     const unicos = [...new Set((data || []).map((t: any) => t.lugar))] as string[]
     setSugerenciasLugar(unicos)
     setShowSugerenciasLugar(unicos.length > 0)
   }
 
-  async function fetchVariedades(query: string) {
-    if (!query) { setSugerenciasVariedad([]); setShowSugerenciasVariedad(false); return }
-    const { data, error } = await supabase
-      .from('vinos')
-      .select('variedad')
-      .ilike('variedad', `%${query}%`)
-      .not('variedad', 'is', null)
-    console.log('variedad query:', query, 'data:', data, 'error:', error)
+  async function fetchVariedades(q: string) {
+    if (!q) { setSugerenciasVariedad([]); setShowSugerenciasVariedad(false); return }
+    const data = await query(
+      'SELECT DISTINCT variedad FROM vinos WHERE variedad IS NOT NULL AND variedad LIKE ?',
+      [`%${q}%`]
+    )
     const unicos = [...new Set((data || []).map((v: any) => v.variedad))] as string[]
     setSugerenciasVariedad(unicos)
     setShowSugerenciasVariedad(unicos.length > 0)

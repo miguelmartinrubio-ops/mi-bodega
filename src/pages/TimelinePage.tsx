@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import { query } from "../lib/turso";
 
 interface Toma {
   id: string;
@@ -26,11 +26,19 @@ export default function TimelinePage() {
   }, []);
 
   async function fetchTomas() {
-    const { data, error } = await supabase
-      .from("tomas")
-      .select("*, vinos(marca, bodega, tipo)")
-      .order("fecha", { ascending: false });
-    if (!error && data) setTomas(data);
+    try {
+      const rows = await query(
+        `SELECT t.*, v.marca, v.bodega, v.tipo
+         FROM tomas t LEFT JOIN vinos v ON v.id = t.vino_id
+         ORDER BY t.fecha DESC`
+      );
+      setTomas(rows.map(({ marca, bodega, tipo, ...toma }) => ({
+        ...toma,
+        vinos: marca == null && bodega == null ? undefined : { marca, bodega, tipo },
+      })));
+    } catch (error) {
+      console.error("Error cargando tomas:", error);
+    }
     setLoading(false);
   }
 
