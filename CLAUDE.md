@@ -50,3 +50,23 @@ Están configuradas en Vercel (proyecto `mi-bodega`, entorno Production). En loc
 - Trabaja en una rama, abre un Pull Request contra `main` y deja que el usuario lo mergee; Vercel publica al hacer merge.
 - Antes de proponer cambios, comprueba que `npm run build` y `npm run lint` no empeoran.
 - El usuario usa la app sobre todo desde el iPhone (añadida a la pantalla de inicio): cuida el diseño en móvil.
+
+## Añadir un vino a partir de un link
+
+Cuando el usuario pegue el link de un vino (tienda, bodega, Vivino…) o solo su nombre, y pida añadirlo:
+
+1. **Busca la información.** Si no puedes abrir la página directamente, usa la búsqueda web con el nombre del vino sacado de la URL. Contrasta al menos dos fuentes; si discrepan (grado, % de variedades), dilo y usa la ficha de la bodega o la de la añada que indique el usuario.
+2. **Mapea a las columnas de `vinos`:**
+   - `marca`: nombre comercial del vino, sin la añada (p. ej. `Pago de Carraovejas`).
+   - `bodega`: nombre de la bodega/productor. Antes de inventar una grafía nueva, comprueba si ya existe en la tabla (`SELECT DISTINCT bodega ...`) y reutilízala.
+   - `tipo`: uno de `Tinto`, `Blanco`, `Blanco dulce`, `Dulce`, `Dulce PX`, `Generoso`, `Manzanilla`, `Champagne` (los espumosos de Champagne van como `Champagne`).
+   - `grado`: número (REAL), p. ej. `14.5`.
+   - `variedad`: formato `92% Tinto Fino / 5% Cabernet Sauvignon / 3% Merlot` (el de `src/utils/formatVariedad.ts`). Sin porcentajes si no se conocen.
+   - `region`: denominación de origen o región, con el mismo criterio de reutilizar valores existentes (p. ej. `Ribera del Duero`).
+   - `precio`: el rango de `PRICE_RANGES` en `src/data/wines.ts` que contenga el precio de venta encontrado.
+   - `anadas_probadas`, `anadas_recomendadas`, `tier`, `comentarios`, `estado`, `stock`: son datos personales del usuario, **no los inventes**; pregúntaselos.
+3. **Pregunta antes de escribir.** Muestra una tabla con lo que has encontrado (y la fuente) y pregunta en un solo mensaje lo que falte o sea dudoso: añada, si ya lo ha probado (y entonces fecha/lugar de la toma y rating 1–5), estado del kanban (`sin_clasificar`, `quiero_pronto`, `en_lista`, `repetir_pronto`, `repetir_sin_prisa`, `no_repetir`), stock y comentarios. Si el usuario no sabe algo, déjalo en `NULL`.
+4. **Inserta.** Si tienes acceso de red a Turso y el token (`TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN` o los `VITE_*`), inserta tú con una consulta parametrizada y comprueba el resultado. Si no, entrega una única sentencia SQL lista para pegar en el editor SQL de Turso, con los textos escapados (comillas simples duplicadas) y `NULL` donde no haya dato, y una consulta `SELECT` para verificarlo. Si hay una toma, da una segunda sentencia que use el id recién creado, p. ej. `INSERT INTO tomas (id, vino_id, fecha, lugar) VALUES (lower(hex(randomblob(16))), (SELECT max(id) FROM vinos), '2026-10-15', 'Madrid');`.
+5. **Duplicados.** Antes de insertar, avisa si ya parece existir un vino con la misma marca y bodega y pregunta si actualizarlo en vez de crear otro.
+
+Esto no necesita cambios de código ni Pull Request: es solo un alta de datos.
