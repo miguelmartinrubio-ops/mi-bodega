@@ -24,6 +24,7 @@ export default function VinosPage() {
         return order.indexOf(b.precio) - order.indexOf(a.precio)
       }
       if (sortBy === 'tipo') return (a.tipo || '').localeCompare(b.tipo || '')
+      if (sortBy === 'recientes') return Number(b.id) - Number(a.id)
       return (a.bodega || '').localeCompare(b.bodega || '')
     })
 
@@ -49,6 +50,7 @@ export default function VinosPage() {
           <option value="rating" style={{ background: '#1a1a2e' }}>⭐ Rating</option>
           <option value="precio" style={{ background: '#1a1a2e' }}>💰 Precio</option>
           <option value="tipo" style={{ background: '#1a1a2e' }}>🍷 Tipo</option>
+          <option value="recientes" style={{ background: '#1a1a2e' }}>🆕 Recientes</option>
         </select>
       </div>
       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
